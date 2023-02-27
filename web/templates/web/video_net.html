@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webcam Video Stream</title>
+    <meta charset="utf-8">
+    <style>
+        video {
+            display: block;
+            margin: 0 auto;
+            width: 640px;
+            height: 480px;
+        }
+    </style>
+
+</head>
+<body>
+    <video id="video" autoplay></video>
+    <script type="text/javascript">
+        // This line create the websocket object which would be used
+        // to set up the real time communication channel with the python code side (BACKEND)
+        const socket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/'
+            + 'web/'
+            + 'test_room'
+            + '/'
+            );
+
+        socket.onopen = () => {
+            console.log("Websocket Connected!");
+            socket.send('data data data');
+        }
+
+        socket.onclose = () => {
+            console.log("WEbsocket Closed!");
+        }
+
+
+        const video = document.getElementById('video');
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                video.addEventListener('loadedmetadata', () => {
+                    setInterval(() => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                        canvas.toBlob(blob => socket.send(JSON.stringify(blob)));
+                    }, 1000 / 30);
+                });
+            })
+            .catch(console.error);
+    </script>
+</body>
+</html>
+    
